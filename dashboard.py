@@ -147,4 +147,21 @@ with tab2:
     # 4. Financial Metrics
     f_metric1, f_metric2, f_metric3 = st.columns(3)
     f_metric1.metric("Total Revenue", f"₹{total_income}", "High Season")
-    f_metric2.metric("Total
+    f_metric2.metric("Total Expenses", f"₹{total_expense}", "Normal")
+    f_metric3.metric("Net Profit", f"₹{net_profit}", delta_color="normal")
+    
+    st.divider()
+    
+    # 5. Expense Breakdown Chart
+    st.subheader("💸 Expense Breakdown")
+    expenses_only = fin_data[fin_data['Type'] == 'Expense']
+    st.bar_chart(expenses_only.set_index('Category')['Amount'])
+
+# ---------------------------------------------------------
+# 5. SIDEBAR EXTRAS
+# ---------------------------------------------------------
+st.sidebar.markdown("---")
+st.sidebar.write("### Novanode Admin Tools")
+st.sidebar.button("Download Monthly Report (PDF)")
+st.sidebar.info("System Status: Online 🟢")
+
