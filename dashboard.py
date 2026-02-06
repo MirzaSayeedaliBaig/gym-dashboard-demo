@@ -2,24 +2,34 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+# ---------------------------------------------------------
 # 1. PAGE CONFIGURATION
-st.set_page_config(page_title="FitLife Admin", layout="wide")
+# ---------------------------------------------------------
+st.set_page_config(
+    page_title="Novanode Client Dashboard",
+    page_icon="🚀",
+    layout="wide"
+)
 
-# --- AUTHENTICATION BLOCK (Simple Password) ---
-# This creates a sidebar password box
+# ---------------------------------------------------------
+# 2. AUTHENTICATION (The Lock)
+# ---------------------------------------------------------
+# This creates a sidebar password box.
+# For the demo, the password is: admin123
 password = st.sidebar.text_input("Enter Admin Password", type="password")
 
-# CHANGE 'mypassword123' to whatever you want
-if password != "mypassword123":
-    st.info("🔒 Please enter the password to view the dashboard.")
-    st.stop()  # This stops the app from loading until password is correct
+if password != "admin123":
+    st.info("🔒 Please enter the password to access the Novanode Dashboard.")
+    st.stop()  # Stops the app here if password is wrong
 
-st.success("✅ Login Successful!")
+st.sidebar.success("✅ Access Granted")
 
-# --- DASHBOARD LOGIC STARTS HERE ---
+# ---------------------------------------------------------
+# 3. HELPER FUNCTIONS (The Brains)
+# ---------------------------------------------------------
 
-# 2. GENERATE FAKE DATA
-def get_data():
+# Function to generate fake Marketing Data
+def get_marketing_data():
     dates = pd.date_range(start="2026-01-01", periods=30)
     data = pd.DataFrame({
         'Date': dates,
@@ -29,33 +39,112 @@ def get_data():
     })
     return data
 
-df = get_data()
+# Function to write the "AI Summary" paragraph
+def generate_smart_summary(df):
+    total_visits = df['Website_Visits'].sum()
+    total_signups = df['Signups'].sum()
+    conversion_rate = round((total_signups / total_visits) * 100, 2)
+    target_rate = 5.0 
+    
+    summary = f"**Executive Summary:**\n\n"
+    summary += f"This month, the landing page received **{total_visits} visitors**. "
+    
+    if conversion_rate >= target_rate:
+        summary += f"You are converting at **{conversion_rate}%**, which is excellent! "
+        summary += "Recommendation: **Scale up your ad budget**."
+    else:
+        summary += f"However, your conversion rate is **{conversion_rate}%** (Target: 5%). "
+        summary += "Recommendation: **Review pricing or page headlines**."
 
-# 3. DASHBOARD HEADER
-st.title("📊 FitLife Gym - Owner Dashboard")
-st.markdown("Welcome back! Here is how your **'30-Day Challenge'** landing page is performing.")
-st.markdown("---")
+    top_source = df['Source'].mode()[0]
+    summary += f"\n\n**Top Channel:** Most customers are coming from **{top_source}**."
+    return summary
 
-# 4. KEY METRICS
-total_visits = df['Website_Visits'].sum()
-total_signups = df['Signups'].sum()
-conversion_rate = round((total_signups / total_visits) * 100, 2)
+# ---------------------------------------------------------
+# 4. MAIN APP LAYOUT
+# ---------------------------------------------------------
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Visitors", f"{total_visits}", "+12%")
-col2.metric("New Leads", f"{total_signups}", "+8%")
-col3.metric("Conversion Rate", f"{conversion_rate}%", "4% above target")
+st.title("🚀 Novanode Analytics | Client Portal")
+st.markdown("### FitLife Gym - Hyderabad")
 
-st.markdown("---")
+# Create the Two Main Tabs
+tab1, tab2 = st.tabs(["📈 Marketing Intelligence", "💰 Financial HQ"])
 
-# 5. CHARTS
-st.subheader("📈 Traffic Trend (Last 30 Days)")
-st.line_chart(df.set_index('Date')[['Website_Visits', 'Signups']])
+# =========================================================
+# TAB 1: MARKETING
+# =========================================================
+with tab1:
+    st.header("Marketing Performance")
+    
+    # Load Data
+    df_marketing = get_marketing_data()
+    
+    # 1. Key Metrics Row
+    total_visits = df_marketing['Website_Visits'].sum()
+    total_signups = df_marketing['Signups'].sum()
+    conv_rate = round((total_signups / total_visits) * 100, 2)
 
-st.subheader("🎯 Where are your customers coming from?")
-source_counts = df['Source'].value_counts()
-st.bar_chart(source_counts)
+    m_col1, m_col2, m_col3 = st.columns(3)
+    m_col1.metric("Total Visitors", f"{total_visits}", "+12%")
+    m_col2.metric("New Leads", f"{total_signups}", "+8%")
+    m_col3.metric("Conversion Rate", f"{conv_rate}%", "4% above target")
 
-# 6. SIDEBAR FILTERS
-st.sidebar.header("Filter Data")
-st.sidebar.slider("Date Range", 1, 30, 30)
+    st.divider()
+
+    # 2. Charts
+    col_chart1, col_chart2 = st.columns(2)
+    
+    with col_chart1:
+        st.subheader("Traffic vs Leads")
+        st.line_chart(df_marketing.set_index('Date')[['Website_Visits', 'Signups']])
+        
+    with col_chart2:
+        st.subheader("Traffic Sources")
+        st.bar_chart(df_marketing['Source'].value_counts())
+
+    # 3. AI Insights Box
+    st.subheader("🤖 Novanode Analyst Insights")
+    st.info(generate_smart_summary(df_marketing))
+
+
+# =========================================================
+# TAB 2: FINANCE (For You & Your Friend)
+# =========================================================
+with tab2:
+    st.header("Financial Command Center")
+    
+    # 1. Transaction Input Form
+    with st.expander("➕ Add New Expense / Income", expanded=False):
+        with st.form("finance_form"):
+            f_col1, f_col2, f_col3 = st.columns(3)
+            date = f_col1.date_input("Date")
+            t_type = f_col2.selectbox("Type", ["Expense", "Income"])
+            category = f_col3.selectbox("Category", ["Rent", "Salaries", "Ads", "Utilities", "Sales", "Consulting"])
+            
+            amount = st.number_input("Amount (₹)", min_value=0, step=100)
+            note = st.text_input("Description / Notes")
+            
+            submitted = st.form_submit_button("Save Transaction")
+            if submitted:
+                st.success(f"✅ Saved: ₹{amount} for {category} ({t_type})")
+                # NOTE: This connects to Google Sheets in the live version
+    
+    st.divider()
+
+    # 2. Fake Finance Data (Demo Mode)
+    # We create dummy data to show the client what it LOOKS like
+    fin_data = pd.DataFrame({
+        'Category': ['Rent', 'Salaries', 'Ads', 'Gym Memberships', 'Personal Training', 'Utilities'],
+        'Type': ['Expense', 'Expense', 'Expense', 'Income', 'Income', 'Expense'],
+        'Amount': [15000, 25000, 5000, 55000, 30000, 2000]
+    })
+    
+    # 3. Financial Logic
+    total_income = fin_data[fin_data['Type'] == 'Income']['Amount'].sum()
+    total_expense = fin_data[fin_data['Type'] == 'Expense']['Amount'].sum()
+    net_profit = total_income - total_expense
+    
+    # 4. Financial Metrics
+    f_metric1, f_metric2, f_metric3 = st.columns(3)
+    f_metric1.metric("Total Revenue", f"₹{total_income}", "High Season")
+    f_metric2.metric("Total
